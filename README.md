@@ -5,15 +5,15 @@ Expreimenting with implementing token stream via iterator pattern, so far seems 
 Right now functionality is limited to evaluating algebraic expressions, and can utilize
 user defined variables.
 ## Currently Supported Operators
-1) - - subtraction
-2) + - addition
-3) * - multipcation
-4) / - division
-5) < - less than
-6) \> - greater than
-7) = - equal to 
-8) \# - not equal to
-9) Let (\< id \> \< value \>) - assign value to id
+1) \- \- subtraction
+2) \+ \- addition
+3) \* \- multipcation
+4) / \- division
+5) < \- less than
+6) \> \- greater than
+7) = \- equal to 
+8) \# \- not equal to
+9) Let (\< id \> \< value \>) \- assign value to id
 
 ## Some Basic Usage Examples
 
