@@ -4,6 +4,18 @@ An S-expression interpreter
 Expreimenting with implementing token stream via iterator pattern, so far seems nice.
 Right now functionality is limited to evaluating algebraic expressions, and can utilize
 user defined variables.
+## Currently Supported Operators
+- - subtraction
++ - addition
+* - multipcation
+/ - division
+< - less than
+\> - greater than
+= - equal to 
+\# - not equal to
+Let (\< id \> \< value \>) - assign value to id
+
+## Some Basic Usage Examples
 
      max@MaxGorenLaptop:~/mgclisp$ g++ mgclisp.cpp
      max@MaxGorenLaptop:~/mgclisp$ ./a.out
