@@ -36,6 +36,10 @@ void Lexer::initLex() {
     reserved['/'] = DIV;
     reserved['*'] = MUL;
     reserved['.'] = PERIOD;
+    reserved['<'] = LTSYM;
+    reserved['>'] = GTSYM;
+    reserved['='] = EQSYM;
+    reserved['#'] = NEQSYM;
     keywords["let"] = LETSYM;
     keywords["cons"] = CONSSYM;
     keywords["list"] = LISTSYM;

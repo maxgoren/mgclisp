@@ -2,13 +2,28 @@
 #define mgclisp_token_hpp
 #include <iostream>
 #include <vector>
+#include "symboltable/hashfn.hpp"
 using namespace std;
 
 enum Token {
-    LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM
+    LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, LTSYM, GTSYM, EQSYM, NEQSYM, 
+    PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM
 };
-vector<Token> tokenVals = {   LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM };
-vector<string> tokenNames = {"LPAREN", "RPAREN", "ADD", "SUB", "MUL", "DIV", "NUM", "PERIOD", "IDSYM", "LET", "CONS", "LISTSYM"};
+
+template <> struct hashfn<Token> {
+    std::size_t operator()(Token tok) {
+        return size_t(tok);
+    }
+};
+
+vector<Token> tokenVals = { 
+    LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, LTSYM, GTSYM, EQSYM, NEQSYM, 
+    PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM 
+};
+vector<string> tokenNames = {
+    "LPAREN", "RPAREN", "ADD", "SUB", "MUL", "DIV", "NUM", "LTSYM", "GTSYM", "EQSYM", "NEQSYM",
+    "PERIOD", "IDSYM", "LET", "CONS", "LISTSYM"
+};
 
 bool isToken(Token tok) {
     for (auto t : tokenVals)
