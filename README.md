@@ -2,6 +2,8 @@
 An S-expression interpreter
 
 Expreimenting with implementing token stream via iterator pattern, so far seems nice.
+Right now functionality is limited to evaluating algebraic expressions, and can utilize
+user defined variables.
 
      max@MaxGorenLaptop:~/mgclisp$ g++ mgclisp.cpp
      max@MaxGorenLaptop:~/mgclisp$ ./a.out
@@ -10,7 +12,7 @@ Expreimenting with implementing token stream via iterator pattern, so far seems 
      mgclisp> exit
      max@MaxGorenLaptop:~/mgclisp$
      
-I even used it to figure out that theres 328 lines of code :-P
+Summing up the LOC that make up mgclisp:
 
      max@MaxGorenLaptop:~/mgclisp$
      mgclisp> ( + ( + 63 55) (+ (+ 78 51) 59))
