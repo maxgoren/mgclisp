@@ -9,13 +9,9 @@ struct Stack : public stack<T> {
     T pop() {
         T ret = stack<T>::top();
         stack<T>::pop();
-        if (__showDebug)
-            cout<<"Pop: "<<ret<<endl;
         return ret;
     }
     void push(T info) {
-        if (__showDebug)
-            cout<<"Push: "<<info<<endl;
         stack<T>::push(info);
     }
 };

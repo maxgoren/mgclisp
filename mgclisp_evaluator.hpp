@@ -53,12 +53,16 @@ class Evaluator {
                         isLet = true;
                         return;
                     }
+                    console_log("Push: " + tokenNames[opStack.top()]);
                     continue;
                 } else if (parser.match(RPAREN) && !isLet) {
                     parCount--;
                     Token op = opStack.pop();
                     int a = valStack.pop();
                     int b = valStack.pop();
+                    console_log("Pop: " + tokenNames[op]);
+                    console_log("Pop: " + to_string(a));
+                    console_log("Pop: " + to_string(b));
                     console_log(to_string(a) + " " + tokenNames[op] + " " + to_string(b));
                     if (op == MUL) valStack.push(a*b);
                     if (op == ADD) valStack.push(a+b);
@@ -74,12 +78,14 @@ class Evaluator {
                     continue;
                 } else if (parser.matchToken(parser.curr_token(), NUM)) {
                     valStack.push(atoi(parser.curr_value().c_str()));
+                    console_log("Push: " + valStack.top());
                     parser.nexttoken();
                     continue;
                 } else if (parser.matchToken(parser.curr_token(), IDSYM)) {
                     string _id = parser.curr_value();
                     if (context.exists(_id)) {
                         valStack.push(context.getVariable(_id));
+                        console_log("Push: " + valStack.top());
                         parser.nexttoken();
                     } else {
                         cout<<"Error: unknown Identifier: '"<<_id<<"'"<<endl;

@@ -27,7 +27,8 @@ class mgclisp {
         EnvContext env;
         void intpret_line(string line) {
             auto m = lexer.lex(line);
-            print(m);
+            if (__showDebug)
+                print(m);
             int res = evaluator.eval(m, env);
             cout<<" --> "<<res<<endl;
             history.push_back(History(lineno+=5, m, res));
@@ -61,7 +62,7 @@ int main() {
                             "(+ (+ 1 6) 3)",
                             "(+ (- 1 6) 3)",
                             "(* (/ 6 12) (- 1 10))"};
-    mgclisp lisp(true);
+    mgclisp lisp;
     lisp.repl();
     return 0;
 }

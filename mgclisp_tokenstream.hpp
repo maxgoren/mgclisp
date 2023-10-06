@@ -7,8 +7,15 @@ using namespace std;
 enum Token {
     LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM
 };
-
+vector<Token> tokenVals = {   LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM };
 vector<string> tokenNames = {"LPAREN", "RPAREN", "ADD", "SUB", "MUL", "DIV", "NUM", "PERIOD", "IDSYM", "LET", "CONS", "LISTSYM"};
+
+bool isToken(Token tok) {
+    for (auto t : tokenVals)
+        if (t == tok)
+            return true;
+    return false;
+}
 
 struct TokenList {
     Token token;
