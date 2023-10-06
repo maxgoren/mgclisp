@@ -5,7 +5,6 @@
 #include "mgclisp_tokenstream.hpp"
 using namespace std;
 
-
 class Parser {
     private:
         TokenStream m_curr;
@@ -21,35 +20,41 @@ class Parser {
         Parser() {
 
         }
-        bool matchToken(Token token, Token other) {
-            return token == other;
-        }
-        bool match(Token token) {
-            if (matchToken(token, lookahead)) {
-                //cout<<tokenNames[token]<<endl;
-                bool r = nexttoken();
-                if (r == false)
-                    exit(0);
-                return true;
-            }
-            return false;
-        }
-        bool nexttoken() {
-            if (m_curr != TokenStream::end()) {
-                ++m_curr;
-                if (m_curr != TokenStream::end())
-                    lookahead = curr_token();
-                return true;
-            }
-            cout<<"Error: out of tokens"<<endl;
-            return false;
-        }
-        string curr_value() {
-            return (*m_curr).second;
-        }
-        Token curr_token() {
-            return (*m_curr).first;
-        }
+        bool matchToken(Token token, Token other);
+        bool match(Token token);
+        bool nexttoken();
+        string curr_value();
+        Token curr_token();
 };
+
+bool Parser::matchToken(Token token, Token other) {
+    return token == other;
+}
+bool Parser::match(Token token) {
+    if (matchToken(token, lookahead)) {
+        //cout<<tokenNames[token]<<endl;
+        bool r = nexttoken();
+        if (r == false)
+            exit(0);
+        return true;
+    }
+    return false;
+}
+bool Parser::nexttoken() {
+    if (m_curr != TokenStream::end()) {
+        ++m_curr;
+        if (m_curr != TokenStream::end())
+            lookahead = curr_token();
+        return true;
+    }
+    cout<<"Error: out of tokens"<<endl;
+    return false;
+}
+string Parser::curr_value() {
+    return (*m_curr).second;
+}
+Token Parser::curr_token() {
+    return (*m_curr).first;
+}
 
 #endif
