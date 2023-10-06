@@ -1,6 +1,7 @@
 #include <iostream>
 #include "mgclisp_lexer.hpp"
 #include "mgclisp_evaluator.hpp"
+#include "mgclisp_envcontext.hpp"
 using namespace std;
 
 void print(TokenStream& mtokens) {
@@ -23,19 +24,22 @@ class mgclisp {
         int lineno;
         Lexer lexer;
         Evaluator evaluator;
+        EnvContext env;
         void intpret_line(string line) {
             auto m = lexer.lex(line);
-            int res = evaluator.eval(m);
-            cout<<"  "<<res<<endl;
+            print(m);
+            int res = evaluator.eval(m, env);
+            cout<<" --> "<<res<<endl;
             history.push_back(History(lineno+=5, m, res));
         }
     public:
-        mgclisp(vector<string>& sexprs) {
+        mgclisp(vector<string>& sexprs, bool verbosity = false) {
             for (string expr : sexprs)
                 intpret_line(expr);
+                __showDebug = verbosity;
         }
-        mgclisp() {
-
+        mgclisp(bool verbosity = false) {
+            __showDebug = verbosity;
         }
         void repl() {
             string input = "";
@@ -57,7 +61,7 @@ int main() {
                             "(+ (+ 1 6) 3)",
                             "(+ (- 1 6) 3)",
                             "(* (/ 6 12) (- 1 10))"};
-    mgclisp lisp;
+    mgclisp lisp(true);
     lisp.repl();
     return 0;
 }

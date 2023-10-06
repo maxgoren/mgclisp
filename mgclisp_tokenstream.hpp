@@ -5,10 +5,10 @@
 using namespace std;
 
 enum Token {
-    LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, IDSYM, PERIOD
+    LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM
 };
 
-vector<string> tokenNames = {"LPAREN", "RPAREN", "ADD", "SUB", "MUL", "DIV", "NUM", "IDSYM", "PERIOD"};
+vector<string> tokenNames = {"LPAREN", "RPAREN", "ADD", "SUB", "MUL", "DIV", "NUM", "PERIOD", "IDSYM", "LET", "CONS", "LISTSYM"};
 
 struct TokenList {
     Token token;
@@ -24,6 +24,8 @@ struct TokenList {
         next = nullptr; str = "";
     }
 };
+
+bool __showDebug;
 
 class TokenStream {
     private:

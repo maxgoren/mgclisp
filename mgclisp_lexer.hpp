@@ -2,6 +2,7 @@
 #define mgclisp_lexer_hpp
 #include "mgclisp_tokenstream.hpp"
 #include <unordered_map>
+#include "symboltable/hashmap.hpp"
 #include <iostream>
 using namespace std;
 
@@ -9,15 +10,19 @@ class Lexer {
     private:
         int lparCount;
         int rparCount;
-        unordered_map<char, Token> keywords;
+        hashmap<char, Token> reserved;
+        hashmap<string, Token> keywords;
         void initLex() {
-            keywords['('] = LPAREN;
-            keywords[')'] = RPAREN;
-            keywords['+'] = ADD;
-            keywords['-'] = SUB;
-            keywords['/'] = DIV;
-            keywords['*'] = MUL;
-            keywords['.'] = PERIOD;
+            reserved['('] = LPAREN;
+            reserved[')'] = RPAREN;
+            reserved['+'] = ADD;
+            reserved['-'] = SUB;
+            reserved['/'] = DIV;
+            reserved['*'] = MUL;
+            reserved['.'] = PERIOD;
+            keywords["let"] = LETSYM;
+            keywords["cons"] = CONSSYM;
+            keywords["list"] = LISTSYM;
             lparCount = 0;
             rparCount = 0;
         }
@@ -29,29 +34,30 @@ class Lexer {
                 if (str[i] == ')') rparCount++;
                 int lpos = i;
                 int rpos = lpos;
-                if (keywords.find(str[rpos]) != keywords.end()) {
-                    TokenList* node = new TokenList(keywords[str[rpos]], str.substr(lpos, 1), lpos, rpos+1, nullptr);
-                    t->next = node;
-                    t = node;
+                if (reserved.find(str[rpos]) != reserved.end()) {
+                    t->next = new TokenList(reserved[str[rpos]], str.substr(lpos, 1), lpos, rpos+1, nullptr);
+                    t = t->next;
                 } else if (isdigit(str[rpos])) {
                     string num = "";
                     while (isdigit(str[rpos])) {
                         num.push_back(str[rpos]);
                         rpos++;
                     }
-                    TokenList* node = new TokenList(NUM, str.substr(lpos,rpos-lpos), lpos, rpos, nullptr);
-                    t->next = node;
-                    t = node;
+                    t->next = new TokenList(NUM, str.substr(lpos,rpos-lpos), lpos, rpos, nullptr);
+                    t = t->next;
                     rpos--;
                 } else if (isalpha(str[rpos])) {
                     string str_ = "";
-                    while (isalpha(str[rpos]) && (str[rpos] != ' ' && keywords.find(str[rpos]) == keywords.end())) {
+                    while (isalpha(str[rpos]) && (str[rpos] != ' ' && reserved.find(str[rpos]) == reserved.end())) {
                         str_.push_back(str[rpos]);
                         rpos++;
                     }
-                    TokenList* node = new TokenList(IDSYM, str.substr(lpos, rpos-lpos), lpos, rpos, nullptr);
-                    t->next = node;
-                    t = node;
+                    if (keywords.find(str_) != keywords.end()) { 
+                        t->next = new TokenList(keywords[str_], str.substr(lpos, rpos-lpos), lpos, rpos, nullptr);
+                    } else {
+                        t->next = new TokenList(IDSYM, str.substr(lpos, rpos-lpos), lpos, rpos, nullptr);
+                    }
+                    t = t->next;
                 }
                 i = rpos;
             }
