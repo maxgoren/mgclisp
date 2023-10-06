@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
         cout<<s<<endl;
     }
     if (argc < 2) {
-        mgclisp lisp(sexprs);
+        mgclisp lisp(sexprs, true);
     } else {
         if (argv[1][1] == 'v') {
             mgclisp lisp(sexprs, true);

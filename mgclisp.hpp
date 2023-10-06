@@ -1,6 +1,7 @@
 #ifndef mgclisp_hpp
 #define mgclisp_hpp
 #include <iostream>
+#include <fstream>
 #include "mgclisp_lexer.hpp"
 #include "mgclisp_evaluator.hpp"
 #include "mgclisp_envcontext.hpp"
@@ -10,10 +11,11 @@ class mgclisp {
     private:
         struct History {
             int lineno;
+            string text;
             TokenStream m;
             int result;
-            History(int ln = 0, TokenStream ts = 0, int r = 0) {
-                lineno = ln; m = ts; result = r;
+            History(int ln = 0, string str = "", TokenStream ts = 0, int r = 0) {
+                lineno = ln; text = str; m = ts; result = r;
             }
         };
         vector<History> history;
@@ -23,18 +25,36 @@ class mgclisp {
         EnvContext env;
         void intpret_line(string line);
     public:
-        mgclisp(vector<string>& sexprs, bool verbosity = false) {
-            __showDebug = verbosity;
-            for (string expr : sexprs) {
-                cout<<expr<<endl;
-                intpret_line(expr);
-            }
-        }
-        mgclisp(bool verbosity = false) {
-            __showDebug = verbosity;
-        }
+        mgclisp(vector<string>& sexprs, bool verbosity);
+        mgclisp(bool verbosity = false);
+        ~mgclisp();
         void repl();
 };
+
+mgclisp::mgclisp(vector<string>& sexprs, bool verbosity) {
+    __showDebug = verbosity;
+    for (string expr : sexprs) {
+        cout<<expr<<endl;
+        intpret_line(expr);
+    }
+}
+
+mgclisp::mgclisp(bool verbosity) {
+    __showDebug = verbosity;
+}
+
+mgclisp::~mgclisp() {
+    if (!history.empty()) {
+        ofstream hist;
+        hist.open(".mgclisp_history");
+        if (hist.is_open()) {
+            for (auto t : history) {
+                hist << t.text <<endl;
+            }
+            hist.close();
+        }
+    }
+}
 
 void mgclisp::repl() {
     string input = "";
@@ -56,7 +76,7 @@ void mgclisp::intpret_line(string line) {
         print(m);
     int res = evaluator.eval(m, env);
     cout<<" --> "<<res<<endl;
-    history.push_back(History(lineno+=5, m, res));
+    history.push_back(History(lineno+=5, line, m, res));
 }
 
 #endif

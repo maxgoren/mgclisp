@@ -26,10 +26,9 @@ SOFTWARE.
 #define iterable_hashtable_hpp
 #include <iostream>
 #include "hashfn.hpp"
-#include "IterableMapInterface.hpp"
 
 template <typename K, typename V, class hasher = hashfn<K>>
-class hashmap : public IterableMap<K,V> {
+class hashmap {
     private:
         constexpr static double MAX_LOADFACTOR = 0.5;
         constexpr static double MAX_SHRINKFACTOR = 0.78;
@@ -87,12 +86,15 @@ class hashmap : public IterableMap<K,V> {
             return (double)n/maxn;
         }
     public:
-        class Iterator : public Iter {
+        class Iterator {
             private:
                 MapEntry* __MapEntryPtr;
             public:
                 Iterator(MapEntry* c) : __MapEntryPtr(c) {
                     
+                }
+                Iterator(const Iterator& o) {
+                    __MapEntryPtr = o.__MapEntryPtr;
                 }
                 Iterator() : __MapEntryPtr(nullptr) { }
                 pair<K,V> operator*() {
@@ -119,6 +121,10 @@ class hashmap : public IterableMap<K,V> {
                 }
                 bool operator!=(const Iterator& o) const {
                     return !(*this==o);
+                }
+                Iterator operator=(const Iterator& o) {
+                    __MapEntryPtr = o.__MapEntryPtr;
+                    return *this;
                 }
         };
         Iterator _begin;
@@ -216,11 +222,11 @@ class hashmap : public IterableMap<K,V> {
             _end = Iterator(table+maxn);
             return _end;
         }
-        const Iterator& begin() const {
+        const Iterator begin() const {
             if (empty()) return end();
             return Iterator(table);
         }
-        const Iterator& end() const {
+        const Iterator end() const {
             return Iterator(table+maxn);
         }
         V& operator[](K key) {
@@ -249,8 +255,8 @@ class hashmap : public IterableMap<K,V> {
             table = new MapEntry[maxn];
             tombstones = 0;
             if (!o.empty()) {
-                for (auto it = o.begin(); it != o.end(); it++) {
-                    put((*it).first, (*it).second);
+                for (auto it : o) {
+                    put(it.first, it.second);
                 }
             }
             return *this;
