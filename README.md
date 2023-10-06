@@ -20,3 +20,35 @@ Summing up the LOC that make up mgclisp:
      mgclisp> (+ 306 22)
         328
      max@MaxGorenLaptop:~/mgclisp$
+
+If you pass verbosity = true to the interpreter, it will also display the results of parsing the expression
+as well as the evaluation steps:
+
+     max@MaxGorenLaptop:~/mgclisp$ ./mgclisp -v
+     mgclisp> (let (x 2))
+     <[LPAREN, (]>
+     <[LET, let]>
+     <[LPAREN, (]>
+     <[IDSYM, x]>
+     <[NUM, 2]>
+     <[RPAREN, )]>
+     <[RPAREN, )]>
+     x: 2
+      --> 2
+     mgclisp> (+ x 8)
+     <[LPAREN, (]>
+     <[ADD, +]>
+     <[IDSYM, x]>
+     <[NUM, 8]>
+     <[RPAREN, )]>
+     Push: ADD
+     Push: 2
+     Push: 8
+     Pop: ADD  
+     Pop: 8
+     Pop: 2
+     8 ADD 2
+    Result: 10
+      --> 10
+    mgclisp> exit
+    max@MaxGorenLaptop:~/mgclisp$
