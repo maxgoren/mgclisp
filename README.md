@@ -13,7 +13,7 @@ user defined variables.
 6) \> \- greater than
 7) = \- equal to 
 8) \# \- not equal to
-9) Let (\< id \> \< value \>) \- assign value to id
+9) let (\< id \> \< value \>) \- assign value to id
 
 ## Some Basic Usage Examples
 
