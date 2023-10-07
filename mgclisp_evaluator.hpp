@@ -57,24 +57,41 @@ int Evaluator::eval(TokenStream m, EnvContext& ctx) {
 void Evaluator::handleLet(EnvContext& context) {
     string _id;
     int _value;
-    if (parser.match(LPAREN)) {
-        parCount++;
-        if (parser.matchToken(parser.curr_token(), IDSYM)) {
-            _id = parser.curr_value();
-            parser.nexttoken();
-            if (parser.matchToken(parser.curr_token(), NUM)) {
-                _value = atoi(parser.curr_value().c_str());
-                context.setVariable(_id, _value);
-                console_log(_id + ": " + to_string(context.getVariable(_id)));
+    int lpar = 1;
+    int rpar = 0;
+    while (lpar != rpar) {
+        if (parser.match(LPAREN)) {
+            parCount++; lpar++;
+            if (parser.matchToken(parser.curr_token(), IDSYM)) {
+               _id = parser.curr_value();
                 parser.nexttoken();
+                if (parser.matchToken(parser.curr_token(), NUM)) {
+                    _value = atoi(parser.curr_value().c_str());
+                    context.setVariable(_id, _value);
+                    console_log(_id + ": " + to_string(context.getVariable(_id)));
+                    parser.nexttoken();
+                } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
+                    _value = context.getVariable(parser.curr_value());
+                    context.setVariable(_id, _value);
+                    console_log(_id + ": " + to_string(context.getVariable(_id)));
+                    parser.nexttoken();
+                } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
+                    _value = eval(context);
+                    context.setVariable(_id, _value);
+                    console_log(_id + ": " + to_string(context.getVariable(_id)));
+                } else {
+                    cout<<"Error assigning value: "<<parser.curr_value()<<endl;
+                    return;
+                }
+                valStack.push(_value);
             } else {
-                cout<<"Assigned value must be a number"<<endl;
+                cout<<"variable names must contain only letters"<<endl;
             }
-            valStack.push(_value);
-            return;
-        } else {
-            cout<<"variable names must contain only letters"<<endl;
+        } else if (parser.match(RPAREN)) {
+                parCount--;
+                rpar++;
         }
+        console_log("par: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
     }
 }
 
