@@ -88,7 +88,7 @@ int Evaluator::eval(EnvContext& context) {
             parCount++;
             if (binOps.find(parser.curr_token()) != binOps.end()) {
                 Token op = parser.curr_token();
-                cout<<"Op: "<<tokenNames[op]<<endl;
+                console_log("Op: " + tokenNames[op]);
                 parser.nexttoken();
                 int value = 0;
                 while (!parser.match(RPAREN)) {
