@@ -7,10 +7,6 @@
 #include "mgclisp_envcontext.hpp"
 #include "symboltable/hashmap.hpp"
 
-void console_log(string log) {
-    if (__showDebug)
-        cout<<log<<endl;
-}
 
 class Evaluator {
     private:
@@ -22,8 +18,10 @@ class Evaluator {
         void handleCons(EnvContext& context);
         void handleList(EnvContext& context);
         void handleLet(EnvContext& context);
-        void evaluate(EnvContext& context); 
+        void evaluate(EnvContext& context);
+        int eval(EnvContext& context);
         void initBinOps();
+        int calculateScope(Stack<int> sf, Token op);
     public:
         Evaluator(TokenStream expr);
         Evaluator();
@@ -52,15 +50,9 @@ void Evaluator::initBinOps() {
 int Evaluator::eval(TokenStream m, EnvContext& ctx) {
     parser = Parser(m);
     parCount = 0;
-    evaluate(ctx);
-    return valStack.top();
+    return eval(ctx);
 }
 
-void Evaluator::handleList(EnvContext& context) {
-    if (parser.matchToken(parser.curr_token(), IDSYM) || parser.matchToken(parser.curr_token(), NUM)) {
-
-    }
-}
 
 void Evaluator::handleLet(EnvContext& context) {
     string _id;
@@ -86,68 +78,59 @@ void Evaluator::handleLet(EnvContext& context) {
     }
 }
 
-void Evaluator::evaluate(EnvContext& context) {
+
+int Evaluator::eval(EnvContext& context) {
+    Stack<int> localVal;
     bool isLet = false;
-    for (;;) {
+    int noOpLoopCount = 0;
+    while (parser.getState() != DONE) {
         if (parser.match(LPAREN)) {
             parCount++;
             if (binOps.find(parser.curr_token()) != binOps.end()) {
-                opStack.push(parser.curr_token());
+                Token op = parser.curr_token();
+                cout<<"Op: "<<tokenNames[op]<<endl;
                 parser.nexttoken();
-            } else if (parser.match(LETSYM)) {
-                handleLet(context);
-                isLet = true;
-                return;
-            } else if (parser.match(LISTSYM)) {
-                handleList(context);
-            }
-            console_log("Push: " + tokenNames[opStack.top()]);
-            continue;
-        } else if (parser.match(RPAREN) && !isLet) {
-            parCount--;
-            Token op = opStack.pop();
-            int a = valStack.pop();
-            int b = valStack.pop();
-            console_log("Pop: " + tokenNames[op]);
-            console_log("Pop: " + to_string(a));
-            console_log("Pop: " + to_string(b));
-            console_log(to_string(a) + " " + tokenNames[op] + " " + to_string(b));
-            if (op == MUL) valStack.push(a*b);
-            if (op == ADD) valStack.push(a+b);
-            if (op == DIV) valStack.push(b/a);
-            if (op == SUB) valStack.push(b-a);
-            if (op == LTSYM) valStack.push(b < a);
-            if (op == GTSYM) valStack.push(b > a);
-            if (op == EQSYM) valStack.push(a == b);
-            if (op == NEQSYM) valStack.push(a != b);
-            console_log("Result: " + to_string(valStack.top()));
-            if (parCount == 0 && opStack.empty())
-                return;
-            continue;
-        } else if (parser.match(RPAREN) && isLet) {
-            parCount--;
-            return;
-            continue;
-        } else if (parser.matchToken(parser.curr_token(), NUM)) {
-            valStack.push(atoi(parser.curr_value().c_str()));
-            console_log("Push: " + to_string(valStack.top()));
-            parser.nexttoken();
-            continue;
-        } else if (parser.matchToken(parser.curr_token(), IDSYM)) {
-            string _id = parser.curr_value();
-            if (context.exists(_id)) {
-                valStack.push(context.getVariable(_id));
-                console_log("Push: " + to_string(valStack.top()));
-                parser.nexttoken();
-            } else {
-                cout<<"Error: unknown Identifier: '"<<_id<<"'"<<endl;
-                valStack.push(-1);
-                return;
-            }
+                int value = 0;
+                while (!parser.match(RPAREN)) {
+                    if (parser.matchToken(parser.curr_token(), LPAREN)) {
+                        int res = eval(context);
+                        localVal.push(res);
+                    } else if (parser.matchToken(parser.curr_token(), NUM)) {
+                        localVal.push(atoi(parser.curr_value().c_str()));
+                        parser.nexttoken(); 
+                    } else if (parser.matchToken(parser.curr_token(), IDSYM)) {
+                        int val = context.getVariable(parser.curr_value());
+                        localVal.push(val);
+                        parser.nexttoken();
+                    }
+                }
+                parCount--;
+                int tmp = calculateScope(localVal, op);
+                localVal.push(tmp);
+                return tmp;
+            }    
+        } else if (parser.match(LETSYM)) {
+            handleLet(context);
+            return valStack.top();
         }
-        if (parCount == 0 && opStack.empty())
-                return;
     }
+    return localVal.top();
+}
+
+int Evaluator::calculateScope(Stack<int> localVal, Token op) {
+    int val = localVal.pop();
+    while (!localVal.empty()) {            
+        console_log(to_string(localVal.top()) + " " + tokenNames[op] + " " + to_string(val));
+        if (op == MUL) val *= localVal.pop();
+        if (op == ADD) val += localVal.pop();
+        if (op == DIV) val = localVal.pop() / val;
+        if (op == SUB) val = localVal.pop() - val;
+        if (op == LTSYM) val = localVal.pop() < val;
+        if (op == GTSYM) val = localVal.pop() > val;
+        if (op == EQSYM) val = localVal.pop() == val;
+        if (op == NEQSYM) val = localVal.pop() != val;
+    }
+    return val;
 }
 
 #endif

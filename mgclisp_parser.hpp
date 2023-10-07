@@ -5,13 +5,24 @@
 #include "mgclisp_tokenstream.hpp"
 using namespace std;
 
+void console_log(string log) {
+    if (__showDebug)
+        cout<<log<<endl;
+}
+
+enum ParserState {
+    PARSING, DONE
+};
+
 class Parser {
     private:
         TokenStream m_curr;
         Token lookahead;
-        void  initParser(TokenStream tokens) {
+        ParserState pState;
+        void initParser(TokenStream tokens) {
             m_curr = tokens;
             lookahead = (*m_curr).first;
+            pState = PARSING;
         }
     public:
         Parser(TokenStream& tokens) {
@@ -25,6 +36,7 @@ class Parser {
         bool nexttoken();
         string curr_value();
         Token curr_token();
+        ParserState getState();
 };
 
 bool Parser::matchToken(Token token, Token other) {
@@ -47,14 +59,21 @@ bool Parser::nexttoken() {
             lookahead = curr_token();
         return true;
     }
-    cout<<"Error: out of tokens"<<endl;
+    console_log("out of tokens");
+    pState = DONE;
     return false;
 }
 string Parser::curr_value() {
     return (*m_curr).second;
 }
 Token Parser::curr_token() {
+    if (m_curr == TokenStream::end())
+        return ERRSYM;
     return (*m_curr).first;
+}
+
+ParserState Parser::getState() {
+    return pState;
 }
 
 #endif

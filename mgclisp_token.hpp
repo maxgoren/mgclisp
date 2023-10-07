@@ -7,7 +7,7 @@ using namespace std;
 
 enum Token {
     LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, LTSYM, GTSYM, EQSYM, NEQSYM, 
-    PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM
+    PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM, ERRSYM
 };
 
 template <> struct hashfn<Token> {
@@ -18,11 +18,11 @@ template <> struct hashfn<Token> {
 
 vector<Token> tokenVals = { 
     LPAREN, RPAREN, ADD, SUB, MUL, DIV, NUM, LTSYM, GTSYM, EQSYM, NEQSYM, 
-    PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM 
+    PERIOD, IDSYM, LETSYM, CONSSYM, LISTSYM, ERRSYM
 };
 vector<string> tokenNames = {
     "LPAREN", "RPAREN", "ADD", "SUB", "MUL", "DIV", "NUM", "LTSYM", "GTSYM", "EQSYM", "NEQSYM",
-    "PERIOD", "IDSYM", "LET", "CONS", "LISTSYM"
+    "PERIOD", "IDSYM", "LET", "CONS", "LISTSYM", "ERRSYM"
 };
 
 bool isToken(Token tok) {

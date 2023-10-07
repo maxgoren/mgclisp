@@ -69,6 +69,10 @@ TokenStream Lexer::lexConsume(string str) {
         } else if (isalpha(str[rpos])) {
             string str_ = "";
             while (isalpha(str[rpos]) && (str[rpos] != ' ' && reserved.find(str[rpos]) == reserved.end())) {
+                if (str[rpos] == ')') {
+                    rparCount++;
+                    break;
+                }
                 str_.push_back(str[rpos]);
                 rpos++;
             }
@@ -82,10 +86,10 @@ TokenStream Lexer::lexConsume(string str) {
         i = rpos;
     }
     if (lparCount > rparCount) {
-        cout<<"Syntax error: missing ')'"<<endl;
+        cout<<"Lexer: Syntax error: missing ')'"<<endl;
         return TokenStream::end();
     } else if (lparCount > rparCount) {
-        cout<<"Syntax error: missing '('"<<endl;
+        cout<<"Lexer: Syntax error: missing '('"<<endl;
         return TokenStream::end();
     }
     return TokenStream(dummy.next);

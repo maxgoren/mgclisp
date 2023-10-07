@@ -48,6 +48,9 @@ Cell* cons(Cell* car, Cell* cdr) {
     return car;
 }
 
+Cell* cdr(Cell* cell) {
+    return cell->next;
+}
 
 
 #endif
