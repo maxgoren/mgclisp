@@ -65,8 +65,11 @@ void mgclisp::repl() {
         if (input == "exit" || input == "quit") {
             running = false;
             break;
+        } else if (input.at(0) != '(') {
+            cout<<"Syntax Error: Missing '('"<<endl;
+        } else {
+            intpret_line(input);
         }
-        intpret_line(input);
     }
 }
 

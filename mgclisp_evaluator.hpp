@@ -22,6 +22,7 @@ class Evaluator {
         int eval(EnvContext& context);
         void initBinOps();
         int calculateScope(Stack<int> sf, Token op);
+        int doBinOp(int a, int b, Token op);
     public:
         Evaluator(TokenStream expr);
         Evaluator();
@@ -125,10 +126,13 @@ int Evaluator::eval(EnvContext& context) {
                 int tmp = calculateScope(localVal, op);
                 localVal.push(tmp);
                 return tmp;
-            }    
-        } else if (parser.match(LETSYM)) {
-            handleLet(context);
-            return valStack.top();
+            } else if (parser.match(LETSYM)) {
+                handleLet(context);
+                return valStack.top();
+            }
+        } else {
+            cout<<"What?"<<endl;
+            return -255;
         }
     }
     return localVal.top();
@@ -137,17 +141,25 @@ int Evaluator::eval(EnvContext& context) {
 int Evaluator::calculateScope(Stack<int> localVal, Token op) {
     int val = localVal.pop();
     while (!localVal.empty()) {            
-        console_log(to_string(localVal.top()) + " " + tokenNames[op] + " " + to_string(val));
-        if (op == MUL) val *= localVal.pop();
-        if (op == ADD) val += localVal.pop();
-        if (op == DIV) val = localVal.pop() / val;
-        if (op == SUB) val = localVal.pop() - val;
-        if (op == LTSYM) val = localVal.pop() < val;
-        if (op == GTSYM) val = localVal.pop() > val;
-        if (op == EQSYM) val = localVal.pop() == val;
-        if (op == NEQSYM) val = localVal.pop() != val;
+        val = doBinOp(val, localVal.pop(), op);
     }
     return val;
+}
+
+int Evaluator::doBinOp(int a, int b, Token op) {
+    console_log(to_string(a) + " " + tokenNames[op] + " " + to_string(b));
+    switch (op) {
+        case MUL: return a *= b;
+        case ADD: return a += b;
+        case DIV: return b / a;
+        case SUB: return b - a;
+        case LTSYM: return b < a;
+        case GTSYM: return b > a;
+        case EQSYM: return b == a;
+        case NEQSYM: return b != a;
+    }
+    cout<<"Invalid Op: "<<tokenNames[op]<<endl;
+    return -255;
 }
 
 #endif
