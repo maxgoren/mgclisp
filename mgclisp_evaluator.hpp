@@ -164,6 +164,7 @@ evalResult Evaluator::applyLet(EnvContext& context) {
                         if (__showDebug) {
                             cout<<_id<<": ";
                             _printcelllist(context.getList(_id));
+                            cout<<endl;
                         }
                     }
                     if (res.type == INT)
@@ -185,7 +186,7 @@ evalResult Evaluator::applyLet(EnvContext& context) {
         }
         console_log("par: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
     }
-    return evalResult(INT, new Cell<int>(_value, INT, nullptr));
+    return evalResult(context.getType(_id), new Cell<int>(_value, context.getType(_id), nullptr));
 }
 
 evalResult Evaluator::applyList(EnvContext& context) {
@@ -203,10 +204,22 @@ evalResult Evaluator::applyList(EnvContext& context) {
             console_log("New Cell: " + to_string(_value));
             parser.nexttoken();
         } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
-            _value = context.getInt(parser.curr_value());
-            c->next = new Cell<int>(_value, INT, nullptr);
-            c = c->next;
-            console_log("New Cell: " + to_string(_value));
+            Type valType = context.getType(parser.curr_value());
+            if (valType == INT) {
+                _value = context.getInt(parser.curr_value());
+                c->next = new Cell<int>(_value, INT, nullptr);
+                c = c->next;
+                console_log("New Cell: " + to_string(_value));
+            } else if (valType == LIST) {
+                Cell<int>* head = context.getList(parser.curr_value());
+                for (Cell<int>* t = head; t != nullptr; t = t->next) {
+                    c->next = new Cell<int>(t->data, t->type, nullptr);
+                    c = c->next; 
+                }
+                console_log("Appended: ");
+                if  (__showDebug)
+                    _printcelllist(context.getList(parser.curr_value()));
+            }
             parser.nexttoken();
         } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
             lpar++;
