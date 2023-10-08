@@ -31,6 +31,8 @@ class Evaluator {
         evalResult applyLet(EnvContext& context);
         evalResult applyCons(EnvContext& context);
         evalResult applyList(EnvContext& context);
+        evalResult applyString(EnvContext& context);
+        void applySay(EnvContext& context);
         int doBinOp(int a, int b, Token op);
     public:
         Evaluator(TokenStream expr);
@@ -86,23 +88,31 @@ evalResult Evaluator::eval(EnvContext& context) {
                         int val = context.getVariable(parser.curr_value());
                         localVal.push(val);
                         parser.nexttoken();
+                    } else if (parser.match(QUOTESYM) || parser.match(STRSYM)) {
+                        cout<<"Error: "<<tokenNames[op]<<" can not be performed on strings!"<<endl;
+                        parser.nexttoken();
                     }
                 }
                 parCount--;
                 int tmp = applyBinOps(localVal, op);
                 localVal.push(tmp);
-                return evalResult(INT, new Cell<int>(tmp, nullptr));
+                return evalResult(INT, new Cell<int>(tmp, INT, nullptr));
             } else if (parser.match(LETSYM)) {
                 return applyLet(context);
             } else if (parser.match(LISTSYM)) {
                 return applyList(context);
+            } else if (parser.match(QUOTESYM)) {
+                return applyString(context);
+            } else if (parser.match(SAY)) {
+                applySay(context);
+                return evalResult(OUTPUT, nullptr);
             }
         } else {
             cout<<"What?"<<endl;
-            return evalResult(ERROR, new Cell<int>(-255, nullptr));
+            return evalResult(ERROR, new Cell<int>(-255, ERROR, nullptr));
         }
     }
-    return evalResult(INT, new Cell<int>(localVal.top(), nullptr));
+    return evalResult(INT, new Cell<int>(localVal.top(), INT, nullptr));
 }
 
 evalResult Evaluator::applyLet(EnvContext& context) {
@@ -118,21 +128,25 @@ evalResult Evaluator::applyLet(EnvContext& context) {
                 parser.nexttoken();
                 if (parser.matchToken(parser.curr_token(), NUM)) {
                     _value = atoi(parser.curr_value().c_str());
-                    context.setVariable(INT, _id, new Cell<int>(_value, nullptr));
+                    context.setVariable(INT, _id, new Cell<int>(_value, INT, nullptr));
                     console_log(_id + ": " + to_string(context.getVariable(_id)));
                     parser.nexttoken();
                 } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
                     _value = context.getVariable(parser.curr_value());
-                    context.setVariable(INT, _id, new Cell<int>(_value, nullptr));
+                    context.setVariable(INT, _id, new Cell<int>(_value, INT, nullptr));
                     console_log(_id + ": " + to_string(context.getVariable(_id)));
                     parser.nexttoken();
                 } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
                     evalResult res = eval(context);
                     context.setVariable(res.type, _id, res.value);
                     console_log(_id + ": " + to_string(context.getVariable(_id)));
+                } else if (parser.match(QUOTESYM)) {
+                    context.setVariable(STRING, _id, new Cell<string>(parser.curr_value(), STRING, nullptr));
+                    parser.nexttoken();
+                    parser.nexttoken();
                 } else {
                     cout<<"Error assigning value: "<<parser.curr_value()<<endl;
-                    return evalResult(ERROR, new Cell<int>(-255, nullptr));
+                    return evalResult(ERROR, new Cell<int>(-255, ERROR, nullptr));
                 }
             } else {
                 cout<<"variable names must contain only letters"<<endl;
@@ -143,11 +157,11 @@ evalResult Evaluator::applyLet(EnvContext& context) {
         }
         console_log("par: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
     }
-    return evalResult(INT, new Cell<int>(_value, nullptr));
+    return evalResult(INT, new Cell<int>(_value, INT, nullptr));
 }
 
 evalResult Evaluator::applyList(EnvContext& context) {
-    Cell<int> dummy(0, nullptr);
+    Cell<int> dummy(0, LIST, nullptr);
     Cell<int>* c = &dummy;
     string _id;
     int _value;
@@ -156,13 +170,13 @@ evalResult Evaluator::applyList(EnvContext& context) {
     while (lpar != rpar) {
         if (parser.matchToken(parser.curr_token(), NUM)) {
             _value = atoi(parser.curr_value().c_str());
-            c->next = new Cell<int>(_value, nullptr);
+            c->next = new Cell<int>(_value, INT, nullptr);
             c = c->next;
             console_log("New Cell: " + to_string(_value));
             parser.nexttoken();
         } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
             _value = context.getVariable(parser.curr_value());
-            c->next = new Cell<int>(_value, nullptr);
+            c->next = new Cell<int>(_value, INT, nullptr);
             c = c->next;
             console_log("New Cell: " + to_string(_value));
             parser.nexttoken();
@@ -180,7 +194,49 @@ evalResult Evaluator::applyList(EnvContext& context) {
         }
     }
     context.addList(to_string(context.num_lists()), dummy.next);
-    return evalResult(LIST, new Cell<int>(context.num_lists() - 1, dummy.next));
+    return evalResult(LIST, new Cell<int>(context.num_lists() - 1, LIST, dummy.next));
+}
+
+void Evaluator::applySay(EnvContext& context) {
+    string _id;
+    int _value;
+    int lpar = 1;
+    int rpar = 0;
+    int quoteCount = 0;
+    while (lpar != rpar) {
+        if (parser.matchToken(parser.curr_token(), NUM)) {
+            _value = atoi(parser.curr_value().c_str());
+            cout<<_value<<" ";
+            parser.nexttoken();
+        } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
+            _value = context.getVariable(parser.curr_value());
+            cout<<_value<<" ";
+            parser.nexttoken();
+        } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
+            evalResult res = eval(context);
+            cout<<res.value->data<<endl;
+        } else if (parser.match(QUOTESYM)) {
+            quoteCount += 1;
+            if (quoteCount % 2 != 0 && parser.matchToken(parser.curr_token(), STRSYM)) {
+                cout<<parser.curr_value()<<" ";
+                parser.nexttoken();
+            } else {
+                cout<<"Close String."<<endl;
+                parser.nexttoken();
+            }
+        } else if (parser.matchToken(parser.curr_token(), RPAREN)) {
+                cout<<"hit than pareny"<<endl;
+                parCount -= 1;
+                rpar += 1;
+                parser.nexttoken();
+        }
+        console_log("par: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
+    }
+    cout<<"|"<<endl;
+}
+
+evalResult Evaluator::applyString(EnvContext& context) {
+    return evalResult(STRING, nullptr);
 }
 
 int Evaluator::applyBinOps(Stack<int> localVal, Token op) {

@@ -3,16 +3,11 @@
 #include "symboltable/hashmap.hpp"
 #include "mgclisp_conscell.hpp"
 
-enum Type {
-    INT,
-    LIST,
-    ERROR
-};
-
 class EnvContext {
     private:
         hashmap<string, int> variables;
         hashmap<string, Cell<int>*> lists;
+        hashmap<string, string> strings;
     public:
         EnvContext(hashmap<string, int>& ctx) {
             variables = ctx;
@@ -28,6 +23,12 @@ class EnvContext {
                 variables[_id] = _value->data;
             else if (type == LIST)
                 lists[_id] = _value;
+            else if (type == STRING)
+                strings[_id] = _value->data;
+        }
+        void setVariable(Type type, string _id, Cell<string>* _value) {
+            if (type == STRING)
+                strings[_id] = _value->data;
         }
         Cell<int>* getList(string id) {
             return lists[id];

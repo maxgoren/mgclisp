@@ -78,11 +78,13 @@ void mgclisp::intpret_line(string line) {
     if (__showDebug)
         print(m);
     evalResult res = evaluator.eval(m, env);
-    cout<<" --> ";
-    for (Cell<int>* cell = (res.type == LIST) ? cdr(res.value):res.value; cell != nullptr; cell = cell->next) {
-        cout<<cell->data<<" ";
+    if (res.type != OUTPUT) {
+        cout<<" --> ";
+        for (Cell<int>* cell = (res.type == LIST) ? cdr(res.value):res.value; cell != nullptr; cell = cell->next) {
+            cout<<cell->data<<" ";
+        }
+        cout<<endl;
     }
-    cout<<endl;
     //history.push_back(History(lineno+=5, line, m, res));
 }
 

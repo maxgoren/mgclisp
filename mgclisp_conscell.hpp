@@ -3,13 +3,22 @@
 #include <iostream>
 using namespace std;
 
+enum Type {
+    INT,
+    LIST,
+    STRING,
+    OUTPUT,
+    ERROR
+};
 
 template <class T>
 struct Cell {
+    Type type;
     T data;
     Cell* next;
-    Cell(T data_, Cell* next_) {
+    Cell(T data_, Type type_, Cell* next_) {
         data = data_;
+        type = type_;
         next = next_;
     }
 };
@@ -26,7 +35,7 @@ Cell<T>* cons(Cell<T>* car, Cell<T>* cdr) {
 }
 
 template <class T>
-int car(Cell<T>* cell) {
+T car(Cell<T>* cell) {
     return cell->data;
 }
 
@@ -35,5 +44,9 @@ Cell<T>* cdr(Cell<T>* cell) {
     return cell->next;
 }
 
+template <class T>
+Type typeIs(Cell<T>* cell) {
+    return cell->type;
+}
 
 #endif

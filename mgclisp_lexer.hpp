@@ -40,9 +40,11 @@ void Lexer::initLex() {
     reserved['>'] = GTSYM;
     reserved['='] = EQSYM;
     reserved['#'] = NEQSYM;
+    reserved['"'] = QUOTESYM;
     keywords["let"] = LETSYM;
     keywords["cons"] = CONSSYM;
     keywords["list"] = LISTSYM;
+    keywords["say"] = SAY;
     lparCount = 0;
     rparCount = 0;
 }
@@ -57,6 +59,19 @@ TokenStream Lexer::lexConsume(string str) {
         if (reserved.find(str[rpos]) != reserved.end()) {
             t->next = new TokenList(reserved[str[rpos]], str.substr(lpos, 1), lpos, rpos+1, nullptr);
             t = t->next;
+            if (str[rpos] == '"') {
+                lpos++;
+                rpos++;
+                do {
+                    rpos++;
+                } while (str[rpos] != '"');
+                 t->next = new TokenList(STRSYM, str.substr(lpos, rpos-lpos), lpos, rpos, nullptr);
+                 t = t->next;
+                 lpos = rpos;
+                 rpos++;
+                 t->next = new TokenList(reserved[str[lpos]], str.substr(lpos, 1), lpos, rpos+1, nullptr);
+                 t = t->next;
+            }
         } else if (isdigit(str[rpos])) {
             string num = "";
             while (isdigit(str[rpos])) {
