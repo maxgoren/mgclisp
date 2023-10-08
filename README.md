@@ -38,6 +38,13 @@ Summing up the LOC that make up mgclisp:
         328
      max@MaxGorenLaptop:~/mgclisp$
 
+Summing up LOC (its gotten bigger ^_^) using list style
+     max@MaxGorenLaptop:/mnt/c/Users/mgoren/Desktop/pmpc/mgclisp$ ./mgclisp
+     mgclisp> (+ 265 52 47 113 79 20 51 47 91 16 121 266)
+      --> 1168 
+     mgclisp> quit
+     max@MaxGorenLaptop:/mnt/c/Users/mgoren/Desktop/pmpc/mgclisp$
+
 If you pass verbosity = true to the interpreter, it will also display the results of parsing the expression
 as well as the evaluation steps:
 
