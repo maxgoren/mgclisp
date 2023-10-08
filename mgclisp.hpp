@@ -79,7 +79,7 @@ void mgclisp::intpret_line(string line) {
         print(m);
     evalResult res = evaluator.eval(m, env);
     cout<<" --> ";
-    for (Cell<int>* cell = res.value; cell != nullptr; cell = cell->next) {
+    for (Cell<int>* cell = (res.type == LIST) ? cdr(res.value):res.value; cell != nullptr; cell = cell->next) {
         cout<<cell->data<<" ";
     }
     cout<<endl;

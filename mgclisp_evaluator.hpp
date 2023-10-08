@@ -22,16 +22,15 @@ class Evaluator {
     private:
         int parCount;
         Parser parser;
-        Stack<int> valStack;
         Stack<Token> opStack;
         hashmap<Token, string> binOps;
         void evaluate(EnvContext& context);
         evalResult eval(EnvContext& context);
         void initBinOps();
         int applyBinOps(Stack<int> sf, Token op);
-        void applyLet(EnvContext& context);
-        void applyCons(EnvContext& context);
-        void applyList(EnvContext& context);
+        evalResult applyLet(EnvContext& context);
+        evalResult applyCons(EnvContext& context);
+        evalResult applyList(EnvContext& context);
         int doBinOp(int a, int b, Token op);
     public:
         Evaluator(TokenStream expr);
@@ -94,11 +93,9 @@ evalResult Evaluator::eval(EnvContext& context) {
                 localVal.push(tmp);
                 return evalResult(INT, new Cell<int>(tmp, nullptr));
             } else if (parser.match(LETSYM)) {
-                applyLet(context);
-                return evalResult(INT, new Cell<int>(valStack.top(), nullptr));
+                return applyLet(context);
             } else if (parser.match(LISTSYM)) {
-                applyList(context);
-                return evalResult(LIST, context.getList(to_string(valStack.top())));
+                return applyList(context);
             }
         } else {
             cout<<"What?"<<endl;
@@ -108,7 +105,7 @@ evalResult Evaluator::eval(EnvContext& context) {
     return evalResult(INT, new Cell<int>(localVal.top(), nullptr));
 }
 
-void Evaluator::applyLet(EnvContext& context) {
+evalResult Evaluator::applyLet(EnvContext& context) {
     string _id;
     int _value;
     int lpar = 1;
@@ -135,9 +132,8 @@ void Evaluator::applyLet(EnvContext& context) {
                     console_log(_id + ": " + to_string(context.getVariable(_id)));
                 } else {
                     cout<<"Error assigning value: "<<parser.curr_value()<<endl;
-                    return;
+                    return evalResult(ERROR, new Cell<int>(-255, nullptr));
                 }
-                valStack.push(_value);
             } else {
                 cout<<"variable names must contain only letters"<<endl;
             }
@@ -147,9 +143,10 @@ void Evaluator::applyLet(EnvContext& context) {
         }
         console_log("par: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
     }
+    return evalResult(INT, new Cell<int>(_value, nullptr));
 }
 
-void Evaluator::applyList(EnvContext& context) {
+evalResult Evaluator::applyList(EnvContext& context) {
     Cell<int> dummy(0, nullptr);
     Cell<int>* c = &dummy;
     string _id;
@@ -183,7 +180,7 @@ void Evaluator::applyList(EnvContext& context) {
         }
     }
     context.addList(to_string(context.num_lists()), dummy.next);
-    valStack.push(context.num_lists() - 1);
+    return evalResult(LIST, new Cell<int>(context.num_lists() - 1, dummy.next));
 }
 
 int Evaluator::applyBinOps(Stack<int> localVal, Token op) {
