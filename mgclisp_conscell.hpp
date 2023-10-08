@@ -49,4 +49,19 @@ Type typeIs(Cell<T>* cell) {
     return cell->type;
 }
 
+template <class T>
+void freeCell(Cell<T>* cell) {
+    if (cell != nullptr) {
+        freeCell(cell->next);
+        delete cell;
+    }
+}
+
+template <class T>
+void _printcelllist(Cell<T>* head) {
+    for (Cell<int>* cell = head; cell != nullptr; cell = cell->next) {
+        cout<<cell->data<<" ";
+    }
+}
+
 #endif

@@ -34,6 +34,7 @@ class Evaluator {
         evalResult applyString(EnvContext& context);
         void applySay(EnvContext& context);
         int doBinOp(int a, int b, Token op);
+        void handleVariables(EnvContext& context, string _id);
     public:
         Evaluator(TokenStream expr);
         Evaluator();
@@ -65,6 +66,27 @@ evalResult Evaluator::eval(TokenStream m, EnvContext& ctx) {
     return eval(ctx);
 }
 
+void Evaluator::handleVariables(EnvContext& context, string _id) {
+    string _value;
+    Type valType = context.getType(parser.curr_value());
+    if (valType == INT) {
+        int _ivalue = context.getInt(parser.curr_value());
+        context.setVariable(INT, _id, new Cell<int>(_ivalue, INT, nullptr));
+        console_log(_id + ": " + to_string(context.getInt(_id)));
+    } else if (valType == STRING) {
+        string _svalue = context.getString(parser.curr_value());
+        context.setVariable(STRING, _id, new Cell<string>(_svalue, STRING, nullptr));
+        console_log(_id + ": " + _svalue);
+    } else if (valType == LIST) {
+        Cell<int>* _lvalue = context.getList(_id);
+        context.setVariable(LIST, _id, _lvalue);
+        if (__showDebug) {
+            cout<<_id<<": ";
+            _printcelllist(_lvalue);
+        }
+    }
+}
+
 
 evalResult Evaluator::eval(EnvContext& context) {
     Stack<int> localVal;
@@ -85,7 +107,7 @@ evalResult Evaluator::eval(EnvContext& context) {
                         localVal.push(atoi(parser.curr_value().c_str()));
                         parser.nexttoken(); 
                     } else if (parser.matchToken(parser.curr_token(), IDSYM)) {
-                        int val = context.getVariable(parser.curr_value());
+                        int val = context.getInt(parser.curr_value());
                         localVal.push(val);
                         parser.nexttoken();
                     } else if (parser.match(QUOTESYM) || parser.match(STRSYM)) {
@@ -105,6 +127,7 @@ evalResult Evaluator::eval(EnvContext& context) {
                 return applyString(context);
             } else if (parser.match(SAY)) {
                 applySay(context);
+                cout<<endl;
                 return evalResult(OUTPUT, nullptr);
             }
         } else {
@@ -129,17 +152,22 @@ evalResult Evaluator::applyLet(EnvContext& context) {
                 if (parser.matchToken(parser.curr_token(), NUM)) {
                     _value = atoi(parser.curr_value().c_str());
                     context.setVariable(INT, _id, new Cell<int>(_value, INT, nullptr));
-                    console_log(_id + ": " + to_string(context.getVariable(_id)));
+                    console_log(_id + ": " + to_string(context.getInt(_id)));
                     parser.nexttoken();
                 } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
-                    _value = context.getVariable(parser.curr_value());
-                    context.setVariable(INT, _id, new Cell<int>(_value, INT, nullptr));
-                    console_log(_id + ": " + to_string(context.getVariable(_id)));
+                    handleVariables(context, _id);                    
                     parser.nexttoken();
                 } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
                     evalResult res = eval(context);
                     context.setVariable(res.type, _id, res.value);
-                    console_log(_id + ": " + to_string(context.getVariable(_id)));
+                    if (res.type == LIST) {
+                        if (__showDebug) {
+                            cout<<_id<<": ";
+                            _printcelllist(context.getList(_id));
+                        }
+                    }
+                    if (res.type == INT)
+                        console_log(_id + ": " + to_string(context.getInt(_id)));
                 } else if (parser.match(QUOTESYM)) {
                     context.setVariable(STRING, _id, new Cell<string>(parser.curr_value(), STRING, nullptr));
                     parser.nexttoken();
@@ -175,7 +203,7 @@ evalResult Evaluator::applyList(EnvContext& context) {
             console_log("New Cell: " + to_string(_value));
             parser.nexttoken();
         } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
-            _value = context.getVariable(parser.curr_value());
+            _value = context.getInt(parser.curr_value());
             c->next = new Cell<int>(_value, INT, nullptr);
             c = c->next;
             console_log("New Cell: " + to_string(_value));
@@ -203,35 +231,54 @@ void Evaluator::applySay(EnvContext& context) {
     int lpar = 1;
     int rpar = 0;
     int quoteCount = 0;
+    int noOpLoop = 0;
     while (lpar != rpar) {
         if (parser.matchToken(parser.curr_token(), NUM)) {
             _value = atoi(parser.curr_value().c_str());
             cout<<_value<<" ";
             parser.nexttoken();
         } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
-            _value = context.getVariable(parser.curr_value());
-            cout<<_value<<" ";
+            Type valType = context.getType(parser.curr_value());
+            if (valType == INT) {
+                cout<<context.getInt(parser.curr_value())<<" ";
+            } else if (valType == STRING) {
+                cout<<context.getString(parser.curr_value())<<" ";
+            } else if (valType == LIST) {
+                _printcelllist(context.getList(parser.curr_value()));
+            }
             parser.nexttoken();
         } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
             evalResult res = eval(context);
-            cout<<" --> ";
-            for (Cell<int>* cell = (res.type == LIST) ? cdr(res.value):res.value; cell != nullptr; cell = cell->next) {
-                cout<<cell->data<<" ";
-            }
+            _printcelllist((res.type == LIST) ? cdr(res.value):res.value);
         } else if (parser.match(QUOTESYM)) {
-            quoteCount += 1;
-            if (quoteCount % 2 != 0 && parser.matchToken(parser.curr_token(), STRSYM)) {
+            if (parser.matchToken(parser.curr_token(), STRSYM)) {
                 cout<<parser.curr_value()<<" ";
                 parser.nexttoken();
+                if (parser.match(QUOTESYM)) {
+
+                } else {
+                    cout<<"Error: missing \""<<endl;
+                    return;
+                }
             } else {
-                parser.nexttoken();
+                cout<<"Huh?\n"<<endl;
+                return;
             }
-        } else if (parser.matchToken(parser.curr_token(), RPAREN)) {
+        } else {
+            console_log("^");
+            noOpLoop++;
+            if (noOpLoop > 5) {
+                console_log("Infinite loop detected, bailing out");
+                cout<<"(!!!)"<<endl;
+                return;
+            }
+        }
+        if (parser.match(RPAREN)) {
                 parCount -= 1;
                 rpar += 1;
                 parser.nexttoken();
         }
-        console_log("par: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
+        console_log("\npar: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
     }
 }
 
