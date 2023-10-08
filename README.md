@@ -1,9 +1,12 @@
 # mgclisp
 An S-expression interpreter
 
-Expreimenting with implementing token stream via iterator pattern, so far seems nice.
-Right now functionality is limited to evaluating algebraic expressions, and can utilize
-user defined variables.
+This started as an expreimenting with implementing token stream via iterator pattern as well as applying
+lessons learned during the development of my BASIC interpreter.
+
+Right now functionality is limited to evaluating algebraic expressions, relops, and can utilize
+user defined variables.There is also minor string support and support for lists.
+
 ## Currently Supported Operators
 1) \- \- subtraction
 2) \+ \- addition
@@ -13,7 +16,9 @@ user defined variables.
 6) \> \- greater than
 7) = \- equal to 
 8) \# \- not equal to
-9) let (\< id \> \< value \>) \- assign value to id
+9) (let (\< id \> \< value \>) ...) \- assign value to id
+10) (say \<value\>) -  print value to console.
+11) (list <value> <value> <value> ...) - create a list
 
 ## Some Basic Usage Examples
 
