@@ -214,25 +214,25 @@ void Evaluator::applySay(EnvContext& context) {
             parser.nexttoken();
         } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
             evalResult res = eval(context);
-            cout<<res.value->data<<endl;
+            cout<<" --> ";
+            for (Cell<int>* cell = (res.type == LIST) ? cdr(res.value):res.value; cell != nullptr; cell = cell->next) {
+                cout<<cell->data<<" ";
+            }
         } else if (parser.match(QUOTESYM)) {
             quoteCount += 1;
             if (quoteCount % 2 != 0 && parser.matchToken(parser.curr_token(), STRSYM)) {
                 cout<<parser.curr_value()<<" ";
                 parser.nexttoken();
             } else {
-                cout<<"Close String."<<endl;
                 parser.nexttoken();
             }
         } else if (parser.matchToken(parser.curr_token(), RPAREN)) {
-                cout<<"hit than pareny"<<endl;
                 parCount -= 1;
                 rpar += 1;
                 parser.nexttoken();
         }
         console_log("par: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
     }
-    cout<<"|"<<endl;
 }
 
 evalResult Evaluator::applyString(EnvContext& context) {
