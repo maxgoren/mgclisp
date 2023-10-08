@@ -2,53 +2,36 @@
 #define mgclisp_conscell_hpp
 #include <iostream>
 using namespace std;
-#define INT 0
-#define STR 1
-#define CHR 2
 
+
+template <class T>
 struct Cell {
-    int tag;
-    struct {
-        int num;
-        char alpha;
-        string str;
-    } data;
+    T data;
     Cell* next;
-    Cell() {
-
+    Cell(T data_, Cell* next_) {
+        data = data_;
+        next = next_;
     }
 };
 
-Cell* conscell(int data) {
-    Cell* cc = new Cell;
-    cc->tag = 0;
-    cc->data.num = data;
-    cc->next = nullptr;
-    return cc;
+template <class T>
+Cell<T>* cons(T a, T b) {
+    return new Cell(a, new Cell(b, nullptr));
 }
 
-Cell* conscell(string data) {
-    Cell* cc = new Cell;
-    cc->tag = 1;
-    cc->data.str = data;
-    cc->next = nullptr;
-    return cc;
-}
-
-Cell* conscell(char data) {
-    Cell* cc = new Cell;
-    cc->tag = 2;
-    cc->data.alpha = data;
-    cc->next = nullptr;
-    return cc;
-}
-
-Cell* cons(Cell* car, Cell* cdr) {
+template <class T>
+Cell<T>* cons(Cell<T>* car, Cell<T>* cdr) {
     car->next = cdr;
     return car;
 }
 
-Cell* cdr(Cell* cell) {
+template <class T>
+int car(Cell<T>* cell) {
+    return cell->data;
+}
+
+template <class T>
+Cell<T>* cdr(Cell<T>* cell) {
     return cell->next;
 }
 

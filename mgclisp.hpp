@@ -77,9 +77,13 @@ void mgclisp::intpret_line(string line) {
     auto m = lexer.lex(line);
     if (__showDebug)
         print(m);
-    int res = evaluator.eval(m, env);
-    cout<<" --> "<<res<<endl;
-    history.push_back(History(lineno+=5, line, m, res));
+    evalResult res = evaluator.eval(m, env);
+    cout<<" --> ";
+    for (Cell<int>* cell = res.value; cell != nullptr; cell = cell->next) {
+        cout<<cell->data<<" ";
+    }
+    cout<<endl;
+    //history.push_back(History(lineno+=5, line, m, res));
 }
 
 #endif

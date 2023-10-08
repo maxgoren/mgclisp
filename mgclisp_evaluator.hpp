@@ -7,6 +7,16 @@
 #include "mgclisp_envcontext.hpp"
 #include "symboltable/hashmap.hpp"
 
+//its returning either a singleton, or a list of numbers. 
+//if singleton, just store in Cell's data field.
+struct evalResult {
+    Type type;
+    Cell<int>* value; 
+    evalResult(Type type_, Cell<int>* result_) {
+        type = type_;
+        value = result_;
+    }
+};
 
 class Evaluator {
     private:
@@ -15,18 +25,18 @@ class Evaluator {
         Stack<int> valStack;
         Stack<Token> opStack;
         hashmap<Token, string> binOps;
-        void handleCons(EnvContext& context);
-        void handleList(EnvContext& context);
-        void handleLet(EnvContext& context);
         void evaluate(EnvContext& context);
-        int eval(EnvContext& context);
+        evalResult eval(EnvContext& context);
         void initBinOps();
-        int calculateScope(Stack<int> sf, Token op);
+        int applyBinOps(Stack<int> sf, Token op);
+        void applyLet(EnvContext& context);
+        void applyCons(EnvContext& context);
+        void applyList(EnvContext& context);
         int doBinOp(int a, int b, Token op);
     public:
         Evaluator(TokenStream expr);
         Evaluator();
-        int eval(TokenStream m, EnvContext& ctx);
+        evalResult eval(TokenStream m, EnvContext& ctx);
 };
 
 Evaluator::Evaluator(TokenStream expr) {
@@ -48,14 +58,57 @@ void Evaluator::initBinOps() {
     binOps[NEQSYM] = tokenNames[NEQSYM];
 }
 
-int Evaluator::eval(TokenStream m, EnvContext& ctx) {
+evalResult Evaluator::eval(TokenStream m, EnvContext& ctx) {
     parser = Parser(m);
     parCount = 0;
     return eval(ctx);
 }
 
 
-void Evaluator::handleLet(EnvContext& context) {
+evalResult Evaluator::eval(EnvContext& context) {
+    Stack<int> localVal;
+    Type resultType;
+    while (parser.getState() != DONE) {
+        if (parser.match(LPAREN)) {
+            parCount++;
+            if (binOps.find(parser.curr_token()) != binOps.end()) {
+                Token op = parser.curr_token();
+                console_log("Op: " + tokenNames[op]);
+                parser.nexttoken();
+                int value = 0;
+                while (!parser.match(RPAREN)) {
+                    if (parser.matchToken(parser.curr_token(), LPAREN)) {
+                        evalResult res = eval(context);
+                        localVal.push(car(res.value));
+                    } else if (parser.matchToken(parser.curr_token(), NUM)) {
+                        localVal.push(atoi(parser.curr_value().c_str()));
+                        parser.nexttoken(); 
+                    } else if (parser.matchToken(parser.curr_token(), IDSYM)) {
+                        int val = context.getVariable(parser.curr_value());
+                        localVal.push(val);
+                        parser.nexttoken();
+                    }
+                }
+                parCount--;
+                int tmp = applyBinOps(localVal, op);
+                localVal.push(tmp);
+                return evalResult(INT, new Cell<int>(tmp, nullptr));
+            } else if (parser.match(LETSYM)) {
+                applyLet(context);
+                return evalResult(INT, new Cell<int>(valStack.top(), nullptr));
+            } else if (parser.match(LISTSYM)) {
+                applyList(context);
+                return evalResult(LIST, context.getList(to_string(valStack.top())));
+            }
+        } else {
+            cout<<"What?"<<endl;
+            return evalResult(ERROR, new Cell<int>(-255, nullptr));
+        }
+    }
+    return evalResult(INT, new Cell<int>(localVal.top(), nullptr));
+}
+
+void Evaluator::applyLet(EnvContext& context) {
     string _id;
     int _value;
     int lpar = 1;
@@ -68,17 +121,17 @@ void Evaluator::handleLet(EnvContext& context) {
                 parser.nexttoken();
                 if (parser.matchToken(parser.curr_token(), NUM)) {
                     _value = atoi(parser.curr_value().c_str());
-                    context.setVariable(_id, _value);
+                    context.setVariable(INT, _id, new Cell<int>(_value, nullptr));
                     console_log(_id + ": " + to_string(context.getVariable(_id)));
                     parser.nexttoken();
                 } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
                     _value = context.getVariable(parser.curr_value());
-                    context.setVariable(_id, _value);
+                    context.setVariable(INT, _id, new Cell<int>(_value, nullptr));
                     console_log(_id + ": " + to_string(context.getVariable(_id)));
                     parser.nexttoken();
                 } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
-                    _value = eval(context);
-                    context.setVariable(_id, _value);
+                    evalResult res = eval(context);
+                    context.setVariable(res.type, _id, res.value);
                     console_log(_id + ": " + to_string(context.getVariable(_id)));
                 } else {
                     cout<<"Error assigning value: "<<parser.curr_value()<<endl;
@@ -96,49 +149,44 @@ void Evaluator::handleLet(EnvContext& context) {
     }
 }
 
-
-int Evaluator::eval(EnvContext& context) {
-    Stack<int> localVal;
-    bool isLet = false;
-    int noOpLoopCount = 0;
-    while (parser.getState() != DONE) {
-        if (parser.match(LPAREN)) {
-            parCount++;
-            if (binOps.find(parser.curr_token()) != binOps.end()) {
-                Token op = parser.curr_token();
-                console_log("Op: " + tokenNames[op]);
-                parser.nexttoken();
-                int value = 0;
-                while (!parser.match(RPAREN)) {
-                    if (parser.matchToken(parser.curr_token(), LPAREN)) {
-                        int res = eval(context);
-                        localVal.push(res);
-                    } else if (parser.matchToken(parser.curr_token(), NUM)) {
-                        localVal.push(atoi(parser.curr_value().c_str()));
-                        parser.nexttoken(); 
-                    } else if (parser.matchToken(parser.curr_token(), IDSYM)) {
-                        int val = context.getVariable(parser.curr_value());
-                        localVal.push(val);
-                        parser.nexttoken();
-                    }
-                }
-                parCount--;
-                int tmp = calculateScope(localVal, op);
-                localVal.push(tmp);
-                return tmp;
-            } else if (parser.match(LETSYM)) {
-                handleLet(context);
-                return valStack.top();
-            }
+void Evaluator::applyList(EnvContext& context) {
+    Cell<int> dummy(0, nullptr);
+    Cell<int>* c = &dummy;
+    string _id;
+    int _value;
+    int lpar = 1;
+    int rpar = 0;
+    while (lpar != rpar) {
+        if (parser.matchToken(parser.curr_token(), NUM)) {
+            _value = atoi(parser.curr_value().c_str());
+            c->next = new Cell<int>(_value, nullptr);
+            c = c->next;
+            console_log("New Cell: " + to_string(_value));
+            parser.nexttoken();
+        } else if (parser.matchToken(parser.curr_token(), IDSYM) && context.exists(parser.curr_value())) {
+            _value = context.getVariable(parser.curr_value());
+            c->next = new Cell<int>(_value, nullptr);
+            c = c->next;
+            console_log("New Cell: " + to_string(_value));
+            parser.nexttoken();
+        } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
+            lpar++;
+            evalResult res = eval(context);
+            c->next = res.value;
+            while (c->next) c = c->next;
+            console_log("New Cell: " + to_string(_value));
+        } else if (parser.match(RPAREN)) {
+            rpar++;
         } else {
-            cout<<"What?"<<endl;
-            return -255;
+            cout<<"Error creating cell: "<<parser.curr_value()<<endl;
+            break;
         }
     }
-    return localVal.top();
+    context.addList(to_string(context.num_lists()), dummy.next);
+    valStack.push(context.num_lists() - 1);
 }
 
-int Evaluator::calculateScope(Stack<int> localVal, Token op) {
+int Evaluator::applyBinOps(Stack<int> localVal, Token op) {
     int val = localVal.pop();
     while (!localVal.empty()) {            
         val = doBinOp(val, localVal.pop(), op);
