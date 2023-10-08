@@ -211,9 +211,17 @@ evalResult Evaluator::applyList(EnvContext& context) {
         } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
             lpar++;
             evalResult res = eval(context);
-            c->next = res.value;
+            c->next = (res.type == LIST) ? res.value->next:res.value;
             while (c->next) c = c->next;
-            console_log("New Cell: " + to_string(_value));
+            if (res.type == INT)
+                console_log("New Cell: " + to_string(res.value->data));
+            if (res.type == STRING)
+                console_log("New Cell: " + to_string(res.value->data));
+            if (res.type == LIST && __showDebug) {
+                cout<<"Appended cells: ";
+                _printcelllist(res.value->next);
+            }
+            rpar++;
         } else if (parser.match(RPAREN)) {
             rpar++;
         } else {
@@ -250,6 +258,7 @@ void Evaluator::applySay(EnvContext& context) {
         } else if (parser.matchToken(parser.curr_token(), LPAREN)) {
             evalResult res = eval(context);
             _printcelllist((res.type == LIST) ? cdr(res.value):res.value);
+            rpar++;
         } else if (parser.match(QUOTESYM)) {
             if (parser.matchToken(parser.curr_token(), STRSYM)) {
                 cout<<parser.curr_value()<<" ";
@@ -276,7 +285,8 @@ void Evaluator::applySay(EnvContext& context) {
         if (parser.match(RPAREN)) {
                 parCount -= 1;
                 rpar += 1;
-                parser.nexttoken();
+                if (lpar != rpar)
+                    parser.nexttoken();
         }
         console_log("\npar: " + to_string(parCount) + ", lpar: " + to_string(lpar) + ", rpar: " + to_string(rpar));
     }
