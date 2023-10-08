@@ -1,9 +1,12 @@
 # mgclisp
 An S-expression interpreter
 
-Expreimenting with implementing token stream via iterator pattern, so far seems nice.
-Right now functionality is limited to evaluating algebraic expressions, and can utilize
-user defined variables.
+This started as an expreimenting with implementing token stream via iterator pattern as well as applying
+lessons learned during the development of my BASIC interpreter.
+
+Right now functionality is limited to evaluating algebraic expressions, relops, and can utilize
+user defined variables.There is also minor string support and support for lists.
+
 ## Currently Supported Operators
 1) \- \- subtraction
 2) \+ \- addition
@@ -13,7 +16,9 @@ user defined variables.
 6) \> \- greater than
 7) = \- equal to 
 8) \# \- not equal to
-9) let (\< id \> \< value \>) \- assign value to id
+9) (let (\< id \> \< value \>) ...) \- assign value to id
+10) (say \<value\>) -  print value to console.
+11) (list <value> <value> <value> ...) - create a list
 
 ## Some Basic Usage Examples
 
@@ -32,6 +37,14 @@ Summing up the LOC that make up mgclisp:
      mgclisp> (+ 306 22)
         328
      max@MaxGorenLaptop:~/mgclisp$
+
+Summing up LOC (its gotten bigger ^_^) using list style
+
+     max@MaxGorenLaptop:/mnt/c/Users/mgoren/Desktop/pmpc/mgclisp$ ./mgclisp
+     mgclisp> (+ 265 52 47 113 79 20 51 47 91 16 121 266)
+      --> 1168 
+     mgclisp> quit
+     max@MaxGorenLaptop:/mnt/c/Users/mgoren/Desktop/pmpc/mgclisp$
 
 If you pass verbosity = true to the interpreter, it will also display the results of parsing the expression
 as well as the evaluation steps:
