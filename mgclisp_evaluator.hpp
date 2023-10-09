@@ -102,13 +102,26 @@ evalResult Evaluator::eval(EnvContext& context) {
                 while (!parser.match(RPAREN)) {
                     if (parser.matchToken(parser.curr_token(), LPAREN)) {
                         evalResult res = eval(context);
-                        localVal.push(car(res.value));
+                        if (res.type == INT) {
+                            localVal.push(res.value->data);
+                        } else if (res.type == LIST) {
+                            for (Cell<int>* t = res.value; t != nullptr; t = t->next) {
+                                localVal.push(t->data);
+                            }
+                        }
                     } else if (parser.matchToken(parser.curr_token(), NUM)) {
                         localVal.push(atoi(parser.curr_value().c_str()));
                         parser.nexttoken(); 
                     } else if (parser.matchToken(parser.curr_token(), IDSYM)) {
-                        int val = context.getInt(parser.curr_value());
-                        localVal.push(val);
+                        Type valType = context.getType(parser.curr_value());
+                        if (valType == INT) {
+                            localVal.push(context.getInt(parser.curr_value()));
+                        } else if (valType == LIST) {
+                            Cell<int>* head = context.getList(parser.curr_value());
+                            for (Cell<int>* t = head; t != nullptr; t = t->next) {
+                                localVal.push(t->data);
+                            }
+                        }
                         parser.nexttoken();
                     } else if (parser.match(QUOTESYM) || parser.match(STRSYM)) {
                         cout<<"Error: "<<tokenNames[op]<<" can not be performed on strings!"<<endl;
