@@ -18,7 +18,7 @@ struct evalResult {
     }
 };
 
-class Evaluator {
+class EvalApply {
     private:
         int parCount;
         Parser parser;
@@ -32,24 +32,26 @@ class Evaluator {
         evalResult applyCons(EnvContext& context);
         evalResult applyList(EnvContext& context);
         evalResult applyString(EnvContext& context);
+        evalResult applyCar(EnvContext& context);
+        evalResult applyCdr(EnvContext& context);
         void applySay(EnvContext& context);
         int doBinOp(int a, int b, Token op);
         void handleVariables(EnvContext& context, string _id);
     public:
-        Evaluator(TokenStream expr);
-        Evaluator();
+        EvalApply(TokenStream expr);
+        EvalApply();
         evalResult eval(TokenStream m, EnvContext& ctx);
 };
 
-Evaluator::Evaluator(TokenStream expr) {
+EvalApply::EvalApply(TokenStream expr) {
     initBinOps();
     parser = Parser(expr);
 }
-Evaluator::Evaluator() { 
+EvalApply::EvalApply() { 
     initBinOps();
 }
 
-void Evaluator::initBinOps() {
+void EvalApply::initBinOps() {
     binOps[ADD] = tokenNames[ADD];
     binOps[SUB] = tokenNames[SUB];
     binOps[MUL] = tokenNames[MUL];
@@ -60,13 +62,13 @@ void Evaluator::initBinOps() {
     binOps[NEQSYM] = tokenNames[NEQSYM];
 }
 
-evalResult Evaluator::eval(TokenStream m, EnvContext& ctx) {
+evalResult EvalApply::eval(TokenStream m, EnvContext& ctx) {
     parser = Parser(m);
     parCount = 0;
     return eval(ctx);
 }
 
-void Evaluator::handleVariables(EnvContext& context, string _id) {
+void EvalApply::handleVariables(EnvContext& context, string _id) {
     string _value;
     Type valType = context.getType(parser.curr_value());
     if (valType == INT) {
@@ -88,7 +90,7 @@ void Evaluator::handleVariables(EnvContext& context, string _id) {
 }
 
 
-evalResult Evaluator::eval(EnvContext& context) {
+evalResult EvalApply::eval(EnvContext& context) {
     Stack<int> localVal;
     Type resultType;
     while (parser.getState() != DONE) {
@@ -136,22 +138,28 @@ evalResult Evaluator::eval(EnvContext& context) {
                 return applyLet(context);
             } else if (parser.match(LISTSYM)) {
                 return applyList(context);
+            } else if (parser.match(CONSSYM)) {
+                return applyList(context); // ^_^
+            } else if (parser.match(CAR)) {
+                return applyCar(context);
+            } else if (parser.match(CDR)) {
+                return applyCdr(context);
             } else if (parser.match(QUOTESYM)) {
                 return applyString(context);
             } else if (parser.match(SAY)) {
                 applySay(context);
                 cout<<endl;
                 return evalResult(OUTPUT, nullptr);
-            }
+            } 
         } else {
-            cout<<"What?"<<endl;
+            cout<<"What?"<<parser.curr_value()<<", "<<tokenNames[parser.curr_token()]<<endl;
             return evalResult(ERROR, new Cell<int>(-255, ERROR, nullptr));
         }
     }
     return evalResult(INT, new Cell<int>(localVal.top(), INT, nullptr));
 }
 
-evalResult Evaluator::applyLet(EnvContext& context) {
+evalResult EvalApply::applyLet(EnvContext& context) {
     string _id;
     int _value;
     int lpar = 1;
@@ -202,7 +210,7 @@ evalResult Evaluator::applyLet(EnvContext& context) {
     return evalResult(context.getType(_id), new Cell<int>(_value, context.getType(_id), nullptr));
 }
 
-evalResult Evaluator::applyList(EnvContext& context) {
+evalResult EvalApply::applyList(EnvContext& context) {
     Cell<int> dummy(0, LIST, nullptr);
     Cell<int>* c = &dummy;
     string _id;
@@ -259,7 +267,7 @@ evalResult Evaluator::applyList(EnvContext& context) {
     return evalResult(LIST, new Cell<int>(context.num_lists() - 1, LIST, dummy.next));
 }
 
-void Evaluator::applySay(EnvContext& context) {
+void EvalApply::applySay(EnvContext& context) {
     string _id;
     int _value;
     int lpar = 1;
@@ -289,15 +297,10 @@ void Evaluator::applySay(EnvContext& context) {
             if (parser.matchToken(parser.curr_token(), STRSYM)) {
                 cout<<parser.curr_value()<<" ";
                 parser.nexttoken();
-                if (parser.match(QUOTESYM)) {
-
-                } else {
+                if (!parser.match(QUOTESYM)) {
                     cout<<"Error: missing \""<<endl;
                     return;
                 }
-            } else {
-                cout<<"Huh?\n"<<endl;
-                return;
             }
         } else {
             console_log("^");
@@ -318,11 +321,35 @@ void Evaluator::applySay(EnvContext& context) {
     }
 }
 
-evalResult Evaluator::applyString(EnvContext& context) {
+//place holder till i figure out what im doing with this.
+evalResult EvalApply::applyString(EnvContext& context) {
     return evalResult(STRING, nullptr);
 }
 
-int Evaluator::applyBinOps(Stack<int> localVal, Token op) {
+evalResult EvalApply::applyCar(EnvContext& context) {
+    if (parser.matchToken(LPAREN, parser.curr_token())) {
+        evalResult res = eval(context);
+        if (res.type == LIST || res.type == INT)
+            return evalResult(INT, new Cell<int>(res.value->next->data, INT, nullptr));
+        else cout<<"Error: That only works on lists and cons!"<<endl;
+    }
+    if (parser.matchToken(IDSYM, parser.curr_token())) {
+        Type valType = context.getType(parser.curr_value());
+        if (valType == LIST) {
+            Cell<int>* res = context.getList(parser.curr_value());
+            return evalResult(INT, new Cell<int>(res->data, INT, nullptr));
+        } else if (valType == INT) {
+            return evalResult(INT, new Cell<int>(context.getInt(parser.curr_value()), INT, nullptr));
+        } else cout<<"Error: That only works on lists and cons! "<<valType<<endl;
+    }
+    return evalResult(ERROR, nullptr); 
+}
+
+evalResult EvalApply::applyCdr(EnvContext& context) {
+    return evalResult(ERROR, nullptr);
+}
+
+int EvalApply::applyBinOps(Stack<int> localVal, Token op) {
     int val = localVal.pop();
     while (!localVal.empty()) {            
         val = doBinOp(val, localVal.pop(), op);
@@ -330,7 +357,7 @@ int Evaluator::applyBinOps(Stack<int> localVal, Token op) {
     return val;
 }
 
-int Evaluator::doBinOp(int a, int b, Token op) {
+int EvalApply::doBinOp(int a, int b, Token op) {
     console_log(to_string(a) + " " + tokenNames[op] + " " + to_string(b));
     switch (op) {
         case MUL: return a *= b;

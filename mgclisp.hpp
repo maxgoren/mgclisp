@@ -21,7 +21,7 @@ class mgclisp {
         vector<History> history;
         int lineno;
         Lexer lexer;
-        Evaluator evaluator;
+        EvalApply evaluator;
         EnvContext env;
         void intpret_line(string line);
     public:
@@ -85,7 +85,7 @@ void mgclisp::intpret_line(string line) {
         }
         cout<<endl;
     }
-    string t = (res.type == LIST ? "list":(res.type == INT ? "int":(res.type == STRING ? "string":"error")));
+    string t = (res.type == LIST ? "list":(res.type == INT ? "int":(res.type == STRING ? "string":(res.type == OUTPUT ? "output":"error"))));
     console_log("type: " + t);
     //history.push_back(History(lineno+=5, line, m, res));
 }

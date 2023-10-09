@@ -44,6 +44,8 @@ void Lexer::initLex() {
     keywords["let"] = LETSYM;
     keywords["cons"] = CONSSYM;
     keywords["list"] = LISTSYM;
+    keywords["car"] = CAR;
+    keywords["cdr"] = CDR;
     keywords["say"] = SAY;
     lparCount = 0;
     rparCount = 0;
