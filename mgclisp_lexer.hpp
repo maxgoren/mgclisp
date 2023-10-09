@@ -84,17 +84,14 @@ TokenStream Lexer::lexConsume(string str) {
         } else if (isalpha(str[rpos])) {
             string str_ = "";
             while (isalpha(str[rpos]) && (str[rpos] != ' ' && reserved.find(str[rpos]) == reserved.end())) {
-                if (str[rpos] == ')') {
-                    rparCount++;
-                    break;
-                }
                 str_.push_back(str[rpos]);
                 rpos++;
             }
+            if (str[rpos] == ')') { rparCount++; rpos -= 1; }
             if (keywords.find(str_) != keywords.end()) { 
                 t->next = new TokenList(keywords[str_], str.substr(lpos, rpos-lpos), lpos, rpos, nullptr);
             } else {
-                t->next = new TokenList(IDSYM, str.substr(lpos, rpos-lpos), lpos, rpos, nullptr);
+                t->next = new TokenList(IDSYM, str_, lpos, rpos, nullptr);
             }
             t = t->next;
         }
