@@ -47,6 +47,7 @@ void Lexer::initLex() {
     keywords["car"] = CAR;
     keywords["cdr"] = CDR;
     keywords["say"] = SAY;
+    keywords["doif"] = DOIF;
     lparCount = 0;
     rparCount = 0;
 }
